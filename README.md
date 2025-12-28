@@ -35,4 +35,13 @@ Backend
 
 cd server
 npm install
-
+```
+## После
+```bash
+cd ./metal-site
+npm start
+```
+```bash
+cd ./metal-site
+cd ./server
+node server.js
