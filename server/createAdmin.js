@@ -1,6 +1,5 @@
 const db = require("./db");
 const bcrypt = require("bcrypt");
-
 const name = "Admin";
 const email = "admin@metal-site.local";
 const password = "admin123";
@@ -13,7 +12,7 @@ async function createAdmin() {
       console.log("Админ уже существует");
       return;
     }
-
+    
     db.query(
       "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'admin')",
       [name, email, password_hash],
@@ -26,3 +25,4 @@ async function createAdmin() {
 }
 
 createAdmin();
+

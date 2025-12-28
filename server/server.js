@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const db = require("./db"); // mysql2/promise
+const db = require("./db");
 
 const app = express();
 app.use(cors());
@@ -10,9 +10,6 @@ app.use(express.json());
 
 const JWT_SECRET = "secret_for_demo";
 
-/* ================== AUTH ================== */
-
-// Регистрация
 app.post("/api/register", async (req, res) => {
   const { name, email, password } = req.body;
   if (!name || !email || !password) {
@@ -21,19 +18,17 @@ app.post("/api/register", async (req, res) => {
 
   try {
     const password_hash = await bcrypt.hash(password, 10);
-
     const [result] = await db.query(
       "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
       [name, email, password_hash]
     );
-
     res.json({ id: result.insertId, name, email });
   } catch (err) {
     res.status(400).json({ error: "Email уже используется" });
   }
 });
 
-// Логин
+
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -75,8 +70,6 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-/* ================== MIDDLEWARE ================== */
-
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -94,9 +87,6 @@ function authMiddleware(req, res, next) {
   }
 }
 
-/* ================== ADMIN ================== */
-
-// Пользователи
 app.get("/api/admin/users", authMiddleware, async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Доступ запрещен" });
@@ -110,7 +100,7 @@ app.get("/api/admin/users", authMiddleware, async (req, res) => {
   }
 });
 
-// Продукты (админка)
+
 app.get("/api/admin/products", authMiddleware, async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Доступ запрещен" });
@@ -124,7 +114,7 @@ app.get("/api/admin/products", authMiddleware, async (req, res) => {
   }
 });
 
-// Редактирование продукта
+
 app.put("/api/admin/products/:id", authMiddleware, async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Доступ запрещен" });
@@ -145,9 +135,6 @@ app.put("/api/admin/products/:id", authMiddleware, async (req, res) => {
   }
 });
 
-/* ================== PUBLIC ================== */
-
-// Каталог
 app.get("/api/products", async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM products");
