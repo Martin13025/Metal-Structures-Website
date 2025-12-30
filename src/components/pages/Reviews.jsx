@@ -1,81 +1,74 @@
-import React, { useState } from "react";
-import "./Reviews.css";
+import { useEffect, useState } from "react";
 
-const initialReviews = [
-  { id: 1, name: "Павел В.", rating: 5, text: "Отличный продавец!" },
-  {
-    id: 2,
-    name: "Светлана",
-    rating: 5,
-    text: "Спасибо большое, очень довольны",
-  },
-  { id: 3, name: "Саша Юданов", rating: 5, text: "Советую. Отличный товар." },
-];
+export default function Reviews() {
+  const [reviews, setReviews] = useState([]);
+  const [name, setName] = useState("");
+  const [text, setText] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-function Reviews() {
-  const [reviews, setReviews] = useState(initialReviews);
-  const [newReview, setNewReview] = useState({ name: "", text: "", rating: 0 });
-  const [hoverRating, setHoverRating] = useState(0);
+  useEffect(() => {
+    fetch("http://localhost:5000/api/reviews")
+      .then((res) => res.json())
+      .then((data) => setReviews(data))
+      .catch(() => setError("Ошибка загрузки отзывов"))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const handleSubmit = (e) => {
+  const submitReview = async (e) => {
     e.preventDefault();
-    if (!newReview.name || !newReview.text || newReview.rating === 0) return;
-    setReviews([{ ...newReview, id: Date.now() }, ...reviews]);
-    setNewReview({ name: "", text: "", rating: 0 });
-    setHoverRating(0);
+    setError(null);
+
+    if (!name.trim() || !text.trim()) return;
+
+    try {
+      const res = await fetch("http://localhost:5000/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, text }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      const newReview = await res.json();
+      setReviews((prev) => [newReview, ...prev]);
+
+      setName("");
+      setText("");
+    } catch {
+      setError("Не удалось добавить отзыв");
+    }
   };
 
   return (
-    <div className="reviews-container">
-      <h1>Отзывы</h1>
-
-      <form className="review-form" onSubmit={handleSubmit}>
+    <div className="reviews">
+      <form onSubmit={submitReview}>
         <input
           type="text"
           placeholder="Ваше имя"
-          value={newReview.name}
-          onChange={(e) => setNewReview({ ...newReview, name: e.target.value })}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
         <textarea
           placeholder="Ваш отзыв"
-          value={newReview.text}
-          onChange={(e) => setNewReview({ ...newReview, text: e.target.value })}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
         />
-        <div className="star-rating">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <span
-              key={star}
-              className={`star ${
-                star <= (hoverRating || newReview.rating) ? "filled" : ""
-              }`}
-              onMouseEnter={() => setHoverRating(star)}
-              onMouseLeave={() => setHoverRating(0)}
-              onClick={() => setNewReview({ ...newReview, rating: star })}
-            >
-              ★
-            </span>
-          ))}
-        </div>
         <button type="submit">Отправить</button>
       </form>
 
-      <div className="reviews-list">
-        {reviews.map((r) => (
-          <div key={r.id} className="review-card">
-            <div className="review-header">
-              <strong>{r.name}</strong> ·{" "}
-              {[1, 2, 3, 4, 5].map((star) => (
-                <span key={star} className={star <= r.rating ? "filled" : ""}>
-                  ★
-                </span>
-              ))}
-            </div>
-            <p>{r.text}</p>
-          </div>
-        ))}
-      </div>
+      {loading && <p>Загрузка отзывов…</p>}
+      {error && <p>{error}</p>}
+
+      {reviews.map((rev) => (
+        <div className="review" key={rev.id}>
+          <strong>{rev.name}</strong>
+          <p>{rev.text}</p>
+          {rev.created_at && (
+            <small>{new Date(rev.created_at).toLocaleDateString()}</small>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
-
-export default Reviews;

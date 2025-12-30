@@ -2,11 +2,12 @@ const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const db = require("./db");
+const db = require("./db"); // mysql2/promise
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/images", express.static("public/images"));
 
 const JWT_SECRET = "secret_for_demo";
 
@@ -18,17 +19,19 @@ app.post("/api/register", async (req, res) => {
 
   try {
     const password_hash = await bcrypt.hash(password, 10);
+
     const [result] = await db.query(
       "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
       [name, email, password_hash]
     );
+
     res.json({ id: result.insertId, name, email });
   } catch (err) {
     res.status(400).json({ error: "Email уже используется" });
   }
 });
 
-
+// Логин
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
@@ -70,6 +73,7 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
+/*MIDDLEWARE*/
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -87,6 +91,8 @@ function authMiddleware(req, res, next) {
   }
 }
 
+//Admin
+// Пользователи
 app.get("/api/admin/users", authMiddleware, async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Доступ запрещен" });
@@ -100,7 +106,7 @@ app.get("/api/admin/users", authMiddleware, async (req, res) => {
   }
 });
 
-
+// Продукты (админка)
 app.get("/api/admin/products", authMiddleware, async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Доступ запрещен" });
@@ -114,7 +120,7 @@ app.get("/api/admin/products", authMiddleware, async (req, res) => {
   }
 });
 
-
+// Редактирование продукта
 app.put("/api/admin/products/:id", authMiddleware, async (req, res) => {
   if (req.user.role !== "admin") {
     return res.status(403).json({ error: "Доступ запрещен" });
@@ -135,6 +141,7 @@ app.put("/api/admin/products/:id", authMiddleware, async (req, res) => {
   }
 });
 
+// Каталог
 app.get("/api/products", async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM products");
@@ -142,6 +149,75 @@ app.get("/api/products", async (req, res) => {
   } catch (err) {
     console.error("Ошибка /api/products:", err);
     res.status(500).json({ error: "Ошибка загрузки товаров" });
+  }
+});
+
+// Отзывы
+app.get("/api/reviews", async (req, res) => {
+  try {
+    const [rev] = await db.query("SELECT * FROM reviews");
+    //res.json(rev);
+    res.status(200).json(rev);
+  } catch (err) {
+    console.error("Ошибка /api/reviews:", err);
+    res.sendStatus(500).json({ error: "Ошибка загрузки отзывов " });
+  }
+});
+// эндпоинт пост
+app.post("/api/reviews", async (req, res) => {
+  try {
+    const { name, text } = req.body;
+
+    if (!name || !text) {
+      return res.status(400).json({ error: "Заполните все поля" });
+    }
+
+    const [result] = await db.query(
+      "INSERT INTO reviews (name, text) VALUES (?, ?)",
+      [name, text]
+    );
+
+    res.status(201).json({
+      id: result.insertId,
+      name,
+      text,
+      created_at: new Date(),
+    });
+  } catch (err) {
+    console.error("Ошибка POST /api/reviews:", err);
+    res.status(500).json({ error: "Ошибка добавления отзыва" });
+  }
+});
+
+// Админ отзывы
+app.get("/api/admin/reviews", authMiddleware, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Доступ запрещен" });
+  }
+
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM reviews ORDER BY created_at DESC"
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Ошибка /api/admin/reviews:", err);
+    res.status(500).json({ error: "Ошибка загрузки отзывов" });
+  }
+});
+
+// Удаление отзыва (админ)
+app.delete("/api/admin/reviews/:id", authMiddleware, async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Доступ запрещен" });
+  }
+
+  try {
+    await db.query("DELETE FROM reviews WHERE id = ?", [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Ошибка DELETE /api/admin/reviews/:id:", err);
+    res.status(500).json({ error: "Ошибка удаления отзыва" });
   }
 });
 
