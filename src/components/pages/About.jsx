@@ -36,7 +36,15 @@ function About() {
         </p>
       </div>
 
-      <div style={{ position: "relative", overflow: "hidden" }}>
+      <div
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          borderRadius: "10px",
+          border: "5px solid #f39c12",
+          height: "400px",
+        }}
+      >
         <a
           href="https://yandex.ru/maps/44/izhevsk/?utm_medium=mapframe&utm_source=maps"
           style={{

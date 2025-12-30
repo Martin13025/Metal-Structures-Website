@@ -36,12 +36,14 @@ function Home() {
         </ul>
       </section>
 
-      <section className="gallery">
-        <img src="/images/obuvnica.jpg" alt="Obuvnica" />
-        <img src="/images/veshalka.jpg" alt="Veshalka" />
-        <img src="/images/work1.jpg" alt="Работа 1" />
-        <img src="/images/work2.jpg" alt="Работа 2" />
-        <img src="/images/work3.jpg" alt="Работа 3" />
+      <section className="gallery-wrapper">
+        <div className="gallery">
+          <img src="/images/obuvnica.jpg" alt="Obuvnica" />
+          <img src="/images/veshalka.jpg" alt="Veshalka" />
+          <img src="/images/work1.jpg" alt="Работа 1" />
+          <img src="/images/work2.jpg" alt="Работа 2" />
+          <img src="/images/work3.jpg" alt="Работа 3" />
+        </div>
       </section>
     </main>
   );

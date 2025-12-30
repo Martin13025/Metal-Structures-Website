@@ -20,6 +20,7 @@ main p {
 
 .product-card {
   background: #111;
+  height: 100%;
   border-radius: 14px;
   overflow: hidden;
   display: flex;
@@ -27,6 +28,8 @@ main p {
   color: #fff;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .product-card:hover {
