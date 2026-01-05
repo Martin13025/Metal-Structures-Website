@@ -1,7 +1,7 @@
 admin@metal-site.local / admin123
 <br>Данные для логина админки
 
-
+<i>backend runs locally / requires separate hosting</i>
 # ANDI Pro Market
 
 Веб-приложение для компании по изготовлению металлоконструкций.  
